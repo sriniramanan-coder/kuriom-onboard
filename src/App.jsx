@@ -42,7 +42,7 @@ async function apiFetch(path, token, options = {}) {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(err.detail || `API error: ${res.status}`);
+    const detail = Array.isArray(err.detail) ? err.detail.map(e => e.msg + ' (' + (e.loc||[]).join('.') + ')').join('; ') : (err.detail || `API error: ${res.status}`); throw new Error(detail);
   }
   return res.json();
 }
@@ -89,12 +89,12 @@ function Btn({ children, onClick, disabled, variant = "primary", style = {} }) {
   );
 }
 
-function Card({ children, style = {} }) {
+function Card({ children, style = {}, onClick }) {
   return (
     <div style={{
       background: T.bgCard, border: `1px solid ${T.border}`,
       borderRadius: 8, padding: 20, ...style,
-    }}>{children}</div>
+    }} onClick={onClick}>{children}</div>
   );
 }
 
@@ -180,11 +180,11 @@ const PROV_TIERS = [
 ];
 
 const FIVE_ELEMENTS = [
-  { key: "accuracy",     label: "Accuracy",     desc: "The assertion is factually correct and verifiable against the source." },
-  { key: "scope",        label: "Scope",        desc: "The scope of applicability is correctly defined and not overly broad." },
-  { key: "authority",    label: "Authority",    desc: "The named authority has standing to make this assertion." },
-  { key: "currency",     label: "Currency",     desc: "The knowledge is current and within its stated validity period." },
-  { key: "completeness", label: "Completeness", desc: "No material conditions or exceptions have been omitted." },
+  { key: "content_accurate",      label: "Accuracy",     desc: "The assertion is factually correct and verifiable against the source." },
+  { key: "authority_correct",     label: "Scope",        desc: "The scope of applicability is correctly defined and not overly broad." },
+  { key: "ttl_reflects_reality", label: "Authority",    desc: "The named authority has standing to make this assertion." },
+  { key: "deactivation_specific", label: "Currency",     desc: "The knowledge is current and within its stated validity period." },
+  { key: "downstream_complete",   label: "Completeness", desc: "No material conditions or exceptions have been omitted." },
 ];
 
 // ─── SCREEN 1: NODE SUBMISSION QUEUE ────────────────────────────────────────
@@ -588,7 +588,7 @@ function BulkUpload({ token, user, onNavigate }) {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ detail: res.statusText }));
-        throw new Error(err.detail || `API error: ${res.status}`);
+        const detail = Array.isArray(err.detail) ? err.detail.map(e => e.msg + ' (' + (e.loc||[]).join('.') + ')').join('; ') : (err.detail || `API error: ${res.status}`); throw new Error(detail);
       }
       const data = await res.json();
       setDrafts(data.draft_claims || []);
@@ -813,7 +813,7 @@ function AttestationInbox({ token, user, onNavigate }) {
     try {
       const data = await apiFetch(`/api/v1/knowledge/attest/${node.candidate_node_id}/consent-scope`, token);
       setScope(data);
-    } catch (e) {} finally { setScopeLoading(false); }
+    } catch (e) { setScope({ error: e.message }); } finally { setScopeLoading(false); }
   }
 
   async function handleAttest() {
@@ -824,6 +824,7 @@ function AttestationInbox({ token, user, onNavigate }) {
         method: "POST",
         body: JSON.stringify({
           candidate_node_id: selected.candidate_node_id,
+          action: disposition,
           disposition,
           elements_confirmed: disposition === "APPROVE" ? elements : {},
           notes: notes.trim() || undefined,
@@ -886,6 +887,8 @@ function AttestationInbox({ token, user, onNavigate }) {
 
             {scopeLoading ? (
               <p style={{ color: T.textMuted, fontSize: 13 }}>Loading consent scope...</p>
+            ) : scope?.error ? (
+              <p style={{ color: T.red, fontSize: 13 }}>Error: {scope.error}</p>
             ) : (
               <>
                 {scope?.scope_presented && (
