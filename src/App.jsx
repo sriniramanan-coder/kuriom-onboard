@@ -683,6 +683,7 @@ function BulkUpload({ token, user, onNavigate }) {
       )}
 
       {mode === "csv" && (
+        <>
         <Card style={{ marginBottom: 16 }}>
           <h3 style={{ color: T.text, fontSize: 14, fontWeight: 600, marginBottom: 8 }}>CSV Template</h3>
           <p style={{ color: T.textMuted, fontSize: 12, marginBottom: 12 }}>
@@ -700,6 +701,21 @@ function BulkUpload({ token, user, onNavigate }) {
             URL.revokeObjectURL(url);
           }}>Download Template</Btn>
         </Card>
+        <Card style={{ marginBottom: 16 }}>
+          <h3 style={{ color: T.text, fontSize: 14, fontWeight: 600, marginBottom: 8 }}>Upload CSV</h3>
+          <p style={{ color: T.textMuted, fontSize: 12, marginBottom: 12 }}>
+            Upload your completed CSV file. Claims will be parsed and shown for review before submission.
+          </p>
+          <input type="file" accept=".csv"
+            onChange={e => setFile(e.target.files[0])}
+            style={{ color: T.textSub, fontSize: 13, marginBottom: 12, display: 'block' }} />
+          {file && <p style={{ color: T.textMuted, fontSize: 11, marginBottom: 12 }}>{file.name}</p>}
+          {extractError && <p style={{ color: T.red, fontSize: 13, marginBottom: 8 }}>{extractError}</p>}
+          <Btn onClick={handleCSVParse} disabled={extracting || !file}>
+            {extracting ? 'Parsing...' : 'Parse CSV'}
+          </Btn>
+        </Card>
+        </>
       )}
 
       {/* Draft claims review */}
