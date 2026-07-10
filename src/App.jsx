@@ -501,6 +501,75 @@ function BulkUpload({ token, user, onNavigate }) {
   const [submitError, setSubmitError] = useState(null);
   const [selectedDrafts, setSelectedDrafts] = useState({});
 
+  async function handleCSVParse() {
+    setExtracting(true);
+    setExtractError(null);
+    setDrafts([]);
+    setSelectedDrafts({});
+    try {
+      const text = await file.text();
+      const lines = text.trim().split('\n');
+      const headers = lines[0].split(',');
+      const rows = lines.slice(1);
+      const claims = rows.filter(r => r.trim()).map(row => {
+        // Handle commas inside quoted fields
+        const cols = [];
+        let cur = ''; let inQ = false;
+        for (let i = 0; i < row.length; i++) {
+          if (row[i] === '"') { inQ = !inQ; }
+          else if (row[i] === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+          else { cur += row[i]; }
+        }
+        cols.push(cur.trim());
+        const get = (h) => cols[headers.indexOf(h)] || '';
+        return {
+          node_type: get('node_type').toUpperCase(),
+          domain: get('domain'),
+          assertion: {
+            what: get('assertion_what'),
+            scope: get('assertion_scope'),
+            conditions: null,
+            jurisdiction: null,
+          },
+          provenance: {
+            tier: get('provenance_tier').toUpperCase(),
+            source_type: get('source_type').toUpperCase(),
+            source_reference: get('source_reference') || null,
+            source_authority: get('authority_name') || null,
+            ingestion_date: null,
+            confidence_scores: null,
+          },
+          validity: {
+            ttl_basis: get('ttl_basis').toUpperCase(),
+            ttl_value: null,
+            ttl_event: null,
+            valid_from: null,
+            valid_until: null,
+            deactivation_conditions: null,
+          },
+          authority: {
+            authority_id: 'PENDING_ASSIGNMENT',
+            name: get('authority_name'),
+            role: get('authority_role'),
+            sso_identity: null,
+            authority_scope: null,
+            conflict_flags: null,
+          },
+          extraction_note: 'Imported from CSV bulk upload',
+        };
+      });
+      if (claims.length === 0) throw new Error('No valid rows found in CSV');
+      setDrafts(claims);
+      const sel = {};
+      claims.forEach((_, i) => { sel[i] = true; });
+      setSelectedDrafts(sel);
+    } catch (e) {
+      setExtractError(e.message);
+    } finally {
+      setExtracting(false);
+    }
+  }
+
   async function handleExtract() {
     if (!file || !domain) return;
     setExtracting(true);
