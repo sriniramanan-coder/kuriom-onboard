@@ -1067,12 +1067,13 @@ function OnboardApp() {
         {screen === "attest"  && <AttestationInbox {...props} />}
         {screen === "promote" && <PromotionQueue {...props} />}
       </main>
+      </div>
     </div>
   );
 }
 
 export default function App() {
-  document.title = "Kuriom — Onboarding Portal";
+  document.title = "Kuriom - Onboarding Portal";
   return (
     <AuthProvider>
       <RequireAuth>
