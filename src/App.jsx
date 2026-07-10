@@ -1029,12 +1029,7 @@ function Sidebar({ user, screen, onNavigate, onSignOut }) {
         ))}
       </nav>
       <div style={{ padding: "12px 16px", borderTop: `1px solid ${T.border}` }}>
-        <p style={{ color: T.textMuted, fontSize: 11, marginBottom: 4 }}>{user?.email}</p>
-        <p style={{ color: T.textMuted, fontSize: 10, marginBottom: 8 }}>{user?.role}</p>
-        <button onClick={onSignOut}
-          style={{ background: "none", border: "none", color: T.textMuted, fontSize: 11, cursor: "pointer", padding: 0 }}>
-          Sign out
-        </button>
+
         <p style={{ color: T.border, fontSize: 10, marginTop: 12 }}>Patent Pending</p>
         <p style={{ color: T.border, fontSize: 10 }}>64/008,411 et al.</p>
       </div>
@@ -1045,7 +1040,7 @@ function Sidebar({ user, screen, onNavigate, onSignOut }) {
 // ─── MAIN APP ────────────────────────────────────────────────────────────────
 
 function OnboardApp() {
-  const { user, token, signOut } = useAuth();
+  const { user, token, logout } = useAuth();
   const [screen, setScreen] = useState("queue");
   const [screenData, setScreenData] = useState(null);
 
@@ -1057,8 +1052,14 @@ function OnboardApp() {
   const props = { token, user, onNavigate: handleNavigate };
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: T.bg, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-      <Sidebar user={user} screen={screen} onNavigate={handleNavigate} onSignOut={signOut} />
+    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: T.bg, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+      <header style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", padding: "0 32px", height: 48, borderBottom: `1px solid ${T.border}`, background: T.bgSidebar, flexShrink: 0 }}>
+        <span style={{ color: T.textMuted, fontSize: 12, marginRight: 16 }}>{user?.email}</span>
+        <span style={{ color: T.textMuted, fontSize: 12, marginRight: 16 }}>{user?.role}</span>
+        <button onClick={logout} style={{ background: "none", border: `1px solid ${T.border}`, color: T.textMuted, fontSize: 12, cursor: "pointer", padding: "4px 12px", borderRadius: 4 }}>Sign out</button>
+      </header>
+      <div style={{ display: "flex", flex: 1 }}>
+      <Sidebar user={user} screen={screen} onNavigate={handleNavigate} onSignOut={logout} />
       <main style={{ flex: 1, padding: 32, overflow: "auto" }}>
         {screen === "queue"   && <NodeQueue {...props} />}
         {screen === "submit"  && <NodeSubmitForm {...props} />}
