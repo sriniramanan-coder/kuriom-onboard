@@ -508,7 +508,7 @@ function BulkUpload({ token, user, onNavigate }) {
     setSelectedDrafts({});
     try {
       const text = await file.text();
-      const lines = text.trim().split('\n');
+      const lines = text.trim().replace(/\r/g, '').split('\n');
       const headers = lines[0].split(',');
       const rows = lines.slice(1);
       const claims = rows.filter(r => r.trim()).map(row => {
@@ -628,6 +628,13 @@ function BulkUpload({ token, user, onNavigate }) {
         <p style={{ fontSize: 32, marginBottom: 12 }}>✓</p>
         <h2 style={{ color: T.green, fontSize: 20, fontWeight: 700, margin: "0 0 8px" }}>Bulk Submit Complete</h2>
         <p style={{ color: T.text, fontSize: 15, marginBottom: 4 }}>{submitResult.submitted_count} nodes submitted · {submitResult.error_count} errors</p>
+        {submitResult.error_count > 0 && (
+          <div style={{ marginTop: 12, textAlign: 'left' }}>
+            {(submitResult.results || []).filter(r => r.error).map((r, i) => (
+              <p key={i} style={{ color: T.red, fontSize: 12, marginBottom: 4 }}>Node {r.index}: {r.error}</p>
+            ))}
+          </div>
+        )}
         <p style={{ color: T.textMuted, fontSize: 13, marginBottom: 24 }}>All submitted nodes are pending attestation.</p>
         <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
           <Btn onClick={() => { setSubmitResult(null); setDrafts([]); setFile(null); }}>Upload Another</Btn>
